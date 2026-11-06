@@ -1,0 +1,119 @@
+{
+  "start": {
+    "question": "Is your business subject to federal or state financial/tax regulations (e.g., CPA, Tax Preparer, Enrolled Agent, Wealth/Legal Advisor)?",
+    "options": {
+      "yes": { "target": "flavor_b", "label": "Yes, we are Regulated" },
+      "no": { "target": "flavor_a", "label": "No, we are Standard Commercial" }
+    }
+  },
+  "flavor_a": {
+    "bundle": {
+      "id": "BUNDLE_FLAVOR_A",
+      "name": "Business Base",
+      "mrr": 39,
+      "setup_fee": 299,
+      "features": ["Unlimited Business Email", "25GB Unified Storage", "1 Dedicated DID", "1 Free HD IP Phone"]
+    },
+    "next": "common_addons"
+  },
+  "flavor_b": {
+    "bundle": {
+      "id": "BUNDLE_FLAVOR_B",
+      "name": "Fiduciary & Tax",
+      "mrr": 69,
+      "setup_fee": 399,
+      "features": ["Hardened Exchange P1 (1 incl.)", "25GB Encrypted Vault", "Encrypted VoIP (1 DID)", "1 Free Secure HD IP Phone", "WISP Template + FTC DPA"]
+    },
+    "next": "regulated_addons"
+  },
+  "regulated_addons": {
+    "questions": [
+      {
+        "id": "additional_mailboxes",
+        "text": "How many additional Hardened Exchange P1 mailboxes are required beyond the first included one?",
+        "unit_price": 12,
+        "type": "integer"
+      },
+      {
+        "id": "worm_backup",
+        "text": "Do you require Immutable WORM Backup (30-day offsite snapshots)?",
+        "price": 20,
+        "type": "boolean"
+      }
+    ],
+    "next": "common_addons"
+  },
+  "common_addons": {
+    "questions": [
+      {
+        "id": "managed_it_pcs",
+        "text": "How many workstations require Managed IT support (EDR, Patching, BitLocker)?",
+        "unit_price": 25,
+        "type": "integer"
+      },
+      {
+        "id": "extra_phones",
+        "text": "How many additional Grandstream GRP2613W hardware leases are needed?",
+        "unit_price": 10,
+        "type": "integer"
+      },
+      {
+        "id": "extra_dids",
+        "text": "How many additional Dedicated Inbound DIDs are required?",
+        "unit_price": 20,
+        "type": "integer"
+      },
+      {
+        "id": "storage_expansion",
+        "text": "Do you need Vault Storage expansion (+100 GB)?",
+        "price": 15,
+        "type": "boolean"
+      },
+      {
+        "id": "auto_attendant",
+        "text": "Do you require a Virtual Auto-Attendant (IVR)?",
+        "price": 10,
+        "type": "boolean"
+      },
+      {
+        "id": "sms_texting",
+        "text": "Do you require Business 2-Way Texting (SMS)?",
+        "price": 10,
+        "type": "boolean"
+      },
+      {
+        "id": "cloud_fax",
+        "text": "Do you require Paperless Cloud e-Fax?",
+        "price": 10,
+        "type": "boolean"
+      },
+      {
+        "id": "call_recording",
+        "text": "Do you require the Call Recording Suite (FL § 934.03 compliant)?",
+        "price": 10,
+        "type": "boolean"
+      }
+    ],
+    "next": "final_terms"
+  },
+  "final_terms": {
+    "question": "Would you like to waive the setup fee by signing a standard 24-month service agreement?",
+    "options": {
+      "yes": { "action": "set_setup_fee(0)", "label": "Yes, waive setup fee (24-mo agreement)" },
+      "no": { "action": "keep_setup_fee()", "label": "No, pay setup fee upfront" }
+    },
+    "next": "user_info"
+  },
+  "user_info": {
+    "type": "form",
+    "fields": [
+      { "id": "name", "label": "Full Name", "type": "text", "required": true },
+      { "id": "email", "label": "Email Address", "type": "email", "required": true },
+      { "id": "company", "label": "Company Name", "type": "text", "required": true }
+    ],
+    "next": "summary"
+  },
+  "summary": {
+    "type": "review"
+  }
+}

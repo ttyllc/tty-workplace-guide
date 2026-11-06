@@ -1,9 +1,10 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useQuote } from './hooks/useQuote';
 import logicMap from './data/logicMap.json';
 import AdminPanel from './components/AdminPanel';
 import ChatBubble from './components/chat/ChatBubble';
+import LandingPage from './components/layout/LandingPage';
 
 const StepProgress: React.FC<{ currentStep: string }> = ({ currentStep }) => {
   const steps = [
@@ -28,26 +29,39 @@ const StepProgress: React.FC<{ currentStep: string }> = ({ currentStep }) => {
   const currentIndex = getStepIndex(currentStep);
 
   return (
-    <div className="flex items-center gap-2 mb-8 overflow-x-auto pb-2">
+    <div className="flex items-center gap-2 mb-12 overflow-x-auto pb-4">
       {steps.map((step, i) => (
-        <div key={step.id} className="flex items-center gap-2">
-          <div className={`flex items-center justify-center w-6 h-6 rounded-full text-[10px] font-bold transition-colors ${
-            i <= currentIndex ? 'bg-accent text-white' : 'bg-slate-200 text-slate-500'
-          }`}>
-            {i + 1}
+        <div key={step.id} className="flex items-center gap-3">
+          <div className="relative flex items-center justify-center">
+            <div className={`w-7 h-7 rounded-full text-[11px] font-bold transition-all duration-300 z-10 relative flex items-center justify-center ${
+              i <= currentIndex 
+                ? 'bg-accent text-surface shadow-lg shadow-accent/30 scale-110' 
+                : 'bg-surface text-muted border border-border'
+            }`}>
+              {i < currentIndex ? (
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+              ) : i + 1}
+            </div>
           </div>
+          
           {step.label && (
-            <span className={`text-xs font-medium whitespace-nowrap transition-colors ${
-              i === currentIndex ? 'text-accent font-bold' : 'text-slate-400'
+            <span className={`text-xs font-bold uppercase tracking-wider whitespace-nowrap transition-all duration-300 ${
+              i === currentIndex ? 'text-fg opacity-100' : 'text-muted opacity-60'
             }`}>
               {step.label}
             </span>
           )}
-          {i < steps.length - 1 && (
-            <div className={`w-8 h-px mx-2 transition-colors ${
-              i < currentIndex ? 'bg-accent' : 'bg-slate-200'
-            }`} />
-          )}
+          
+           {i < steps.length - 1 && (
+             <div className="relative w-12 h-px bg-border mx-2">
+               <motion.div 
+                 className="absolute top-0 left-0 h-full bg-accent"
+                 initial={{ width: 0 }}
+                 animate={{ width: i < currentIndex ? '100%' : '0%' }}
+                 transition={{ duration: 0.4, ease: "easeInOut" }}
+               />
+             </div>
+           )}
         </div>
       ))}
     </div>
@@ -62,13 +76,14 @@ const PriceTicker = ({ value }: { value: number }) => {
     const end = value;
     if (start === end) return;
 
-    const duration = 500;
+    const duration = 400;
     const startTime = performance.now();
 
     const animate = (currentTime: number) => {
       const elapsed = currentTime - startTime;
       const progress = Math.min(elapsed / duration, 1);
-      const current = Math.floor(start + (end - start) * progress);
+      const easeProgress = 1 - Math.pow(1 - progress, 4);
+      const current = Math.floor(start + (end - start) * easeProgress);
       
       setDisplayValue(current);
 
@@ -87,32 +102,52 @@ const PriceTicker = ({ value }: { value: number }) => {
   );
 };
 
-const PriceSummary: React.FC<{ totals: { mrr: number; setupFee: number } }> = ({ totals }) => (
-  <div className="p-8 border-b border-border bg-surface/80 backdrop-blur-md sticky top-0 z-10">
-    <div className="flex items-center justify-between mb-6">
-      <h3 className="text-lg font-bold text-fg">Quote Summary</h3>
-      <div className="px-2 py-1 bg-accent/20 text-accent text-[10px] font-bold uppercase tracking-wider rounded">
-        Live Estimate
+const PriceSummary: React.FC<{ totals: { mrr: number; setupFee: number } }> = ({ totals }) => {
+  const grandTotal = totals.mrr + totals.setupFee;
+  
+  return (
+    <div className="p-8 border-b border-border bg-surface/80 backdrop-blur-md sticky top-0 z-10">
+      <div className="flex items-center justify-between mb-8">
+        <h3 className="text-sm font-bold text-fg uppercase tracking-widest">Quote Summary</h3>
+        <div className="flex items-center gap-2 px-2 py-1 bg-accent/10 text-accent text-[9px] font-bold uppercase tracking-tighter rounded-full border border-accent/20">
+          <span className="w-1.5 h-1.5 rounded-full bg-accent animate-pulse" />
+          Live Estimate
+        </div>
       </div>
-    </div>
-    <div className="space-y-4">
-      <div className="flex justify-between items-center group cursor-default">
-        <span className="text-muted group-hover:text-fg transition-colors">Monthly Recurring</span>
-        <PriceTicker value={totals.mrr} />
-      </div>
-      <div className="flex justify-between items-center group cursor-default">
-        <span className="text-muted group-hover:text-fg transition-colors">One-time Setup</span>
-        <PriceTicker value={totals.setupFee} />
-      </div>
-      <div className="pt-4 border-t border-border flex justify-between items-end">
-        <span className="text-sm font-medium text-muted">Estimated Total</span>
-        <div className="text-2xl font-bold text-accent font-mono tabular-nums">
-          <PriceTicker value={totals.mrr + totals.setupFee} />
+      
+      <div className="space-y-3">
+        <div className="flex justify-between items-center group cursor-default">
+          <span className="text-sm text-muted group-hover:text-fg transition-colors duration-200">Monthly Recurring</span>
+          <PriceTicker value={totals.mrr} />
+        </div>
+        <div className="flex justify-between items-center group cursor-default">
+          <span className="text-sm text-muted group-hover:text-fg transition-colors duration-200">One-time Setup</span>
+          <PriceTicker value={totals.setupFee} />
+        </div>
+        
+        <div className="pt-6 mt-6 border-t border-border flex justify-between items-end">
+          <span className="text-xs font-bold text-muted uppercase tracking-wider">Estimated Total</span>
+           <motion.div 
+             key={grandTotal}
+             initial={{ scale: 0.98, opacity: 0.8 }}
+             animate={{ scale: 1, opacity: 1 }}
+             transition={{ type: "spring", stiffness: 400, damping: 25 }}
+             className="text-3xl font-black text-accent font-mono tabular-nums tracking-tighter relative"
+           >
+             <PriceTicker value={grandTotal} />
+             <motion.div 
+               initial={{ opacity: 0, scale: 0.8 }}
+               animate={{ opacity: 0.3, scale: 1.2 }}
+               exit={{ opacity: 0, scale: 0.8 }}
+               transition={{ duration: 0.4 }}
+               className="absolute inset-0 bg-accent blur-xl -z-10"
+             />
+           </motion.div>
         </div>
       </div>
     </div>
-  </div>
-);
+  );
+};
 
 const AIAssistant: React.FC<{ children: React.ReactNode }> = ({ children }) => (
   <div className="flex-grow p-8 flex flex-col bg-bg overflow-y-auto">
@@ -129,10 +164,15 @@ const AIAssistant: React.FC<{ children: React.ReactNode }> = ({ children }) => (
 );
 
 const App: React.FC = () => {
+  const [showLanding, setShowLanding] = useState(true);
   const { state, updateSelection, setStep, setUserInfo } = useQuote();
 
   if (window.location.pathname === '/admin') {
     return <AdminPanel />;
+  }
+
+  if (showLanding) {
+    return <LandingPage onStartConfigurator={() => setShowLanding(false)} />;
   }
 
   const renderStep = () => {
@@ -153,24 +193,26 @@ const App: React.FC = () => {
           <div className="space-y-8">
             <div className="text-center lg:text-left">
               <h2 className="text-4xl font-extrabold mb-4">{stepData.question}</h2>
-              <p className="text-slate-600">Select the path that best describes your business needs.</p>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {Object.entries(stepData.options).map(([key, opt]: [string, any]) => (
-                <div 
-                  key={key}
-                  onClick={() => {
-                    updateSelection('start', key);
-                    setStep(opt.target);
-                  }}
-                   className={`card-selection ${state.selections['start'] === key ? 'selected' : ''}`}
-
-                >
-                  <h3 className="text-xl font-bold mb-2">{opt.label}</h3>
-                  <p className="text-slate-500 text-sm mb-4">Click to select this configuration path.</p>
-                  <div className="mt-auto flex justify-end">
-                    <span className="text-indigo-600 font-bold">Select →</span>
-                  </div>
+               <p className="text-muted">Select the path that best describes your business needs.</p>
+             </div>
+             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+               {Object.entries(stepData.options).map(([key, opt]: [string, any]) => (
+                 <div 
+                   key={key}
+                   onClick={() => {
+                     updateSelection('start', key);
+                     setStep(opt.target);
+                   }}
+                    className={`card-selection ${state.selections['start'] === key ? 'selected' : ''}`}
+                 >
+                   <h3 className="text-xl font-bold mb-2">{opt.label}</h3>
+                   <p className="text-muted text-sm mb-4">Click to select this configuration path.</p>
+                   <div className="mt-auto flex justify-end">
+                     <span className="text-accent font-bold">Select →</span>
+                   </div>
+                 </div>
+               ))}
+             </div>
                 </div>
               ))}
             </div>
@@ -182,20 +224,20 @@ const App: React.FC = () => {
           <div className="space-y-8">
             <div className="text-center lg:text-left">
               <h2 className="text-4xl font-extrabold mb-4">{stepData.bundle.name}</h2>
-              <p className="text-slate-600">The ideal foundation for your business infrastructure.</p>
-            </div>
-             <div className="card-selection border-accent/20 bg-accent/5">
-
-              <ul className="space-y-4 mb-8">
-                {stepData.bundle.features.map((f: string, i: number) => (
-                  <li key={i} className="flex items-center gap-3 text-slate-700">
-                    <span className="text-indigo-600 bg-indigo-100 rounded-full p-1">
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                    </span> 
-                    {f}
-                  </li>
-                ))}
-              </ul>
+               <p className="text-muted">The ideal foundation for your business infrastructure.</p>
+             </div>
+              <div className="card-selection border-accent/20 bg-accent/5">
+ 
+               <ul className="space-y-4 mb-8">
+                 {stepData.bundle.features.map((f: string, i: number) => (
+                   <li key={i} className="flex items-center gap-3 text-fg">
+                     <span className="text-accent bg-accent/10 rounded-full p-1">
+                       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                     </span> 
+                     {f}
+                   </li>
+                 ))}
+               </ul>
               <div className="flex justify-end">
                 <button
                   onClick={() => setStep(stepData.next)}
@@ -211,39 +253,39 @@ const App: React.FC = () => {
         {/* 3. Add-ons */}
         {(state.currentStep === 'regulated_addons' || state.currentStep === 'common_addons') && (
           <div className="space-y-8">
-            <div className="text-center lg:text-left">
-              <h2 className="text-4xl font-extrabold mb-4">Customize Your Solution</h2>
-              <p className="text-slate-600">Tailor your package with specific add-ons and capacities.</p>
-            </div>
-            <div className="grid gap-4">
-               {stepData.questions.map((q: any) => (
-                 <div key={q.id} className="card-selection items-center justify-between flex p-4">
-
-                  <div className="flex flex-col">
-                    <label className="text-lg font-semibold">{q.text}</label>
-                    {q.desc && <p className="text-sm text-slate-500">{q.desc}</p>}
-                  </div>
-                  {q.type === 'integer' ? (
-                    <div className="flex items-center gap-3">
-                      <button 
-                        onClick={() => updateSelection(q.id, Math.max(0, (state.selections[q.id] || 0) - 1))}
-                        className="w-8 h-8 rounded-lg border border-slate-200 flex items-center justify-center hover:bg-slate-50"
-                      >-</button>
-                      <input
-                        type="number"
-                        className="w-12 p-2 border rounded text-center font-mono font-bold"
-                        value={state.selections[q.id] || 0}
-                        onChange={(e) => updateSelection(q.id, parseInt(e.target.value) || 0)}
-                      />
-                      <button 
-                        onClick={() => updateSelection(q.id, (state.selections[q.id] || 0) + 1)}
-                        className="w-8 h-8 rounded-lg border border-slate-200 flex items-center justify-center hover:bg-slate-50"
-                      >+</button>
-                    </div>
-                  ) : (
+             <div className="text-center lg:text-left">
+               <h2 className="text-4xl font-extrabold mb-4">Customize Your Solution</h2>
+               <p className="text-muted">Tailor your package with specific add-ons and capacities.</p>
+             </div>
+             <div className="grid gap-4">
+                {stepData.questions.map((q: any) => (
+                  <div key={q.id} className="card-selection items-center justify-between flex p-4">
+ 
+                   <div className="flex flex-col">
+                     <label className="text-lg font-semibold">{q.text}</label>
+                     {q.desc && <p className="text-sm text-muted">{q.desc}</p>}
+                   </div>
+                   {q.type === 'integer' ? (
+                     <div className="flex items-center gap-3">
+                       <button 
+                         onClick={() => updateSelection(q.id, Math.max(0, (state.selections[q.id] || 0) - 1))}
+                         className="w-8 h-8 rounded-lg border border-border flex items-center justify-center hover:bg-surface"
+                       >-</button>
+                       <input
+                         type="number"
+                         className="w-12 p-2 border rounded text-center font-mono font-bold"
+                         value={state.selections[q.id] || 0}
+                         onChange={(e) => updateSelection(q.id, parseInt(e.target.value) || 0)}
+                       />
+                       <button 
+                         onClick={() => updateSelection(q.id, (state.selections[q.id] || 0) + 1)}
+                         className="w-8 h-8 rounded-lg border border-border flex items-center justify-center hover:bg-surface"
+                       >+</button>
+                     </div>
+                   ) : (
                     <input
                       type="checkbox"
-                      className="w-6 h-6 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+                      className="w-6 h-6 rounded border-border text-accent focus:ring-accent"
                       checked={!!state.selections[q.id]}
                       onChange={(e) => updateSelection(q.id, e.target.checked)}
                     />
@@ -263,48 +305,47 @@ const App: React.FC = () => {
         )}
 
         {/* 4. Final Terms */}
-        {state.currentStep === 'final_terms' && (
-          <div className="space-y-8">
-            <div className="text-center lg:text-left">
-              <h2 className="text-4xl font-extrabold mb-4">{stepData.question}</h2>
-              <p className="text-slate-600">Please review and accept the final terms of service.</p>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {Object.entries(stepData.options).map(([key, opt]: [string, any]) => (
-                <div 
-                  key={key}
-                  onClick={() => {
-                    updateSelection('final_terms', key);
-                    setStep(opt.next);
-                  }}
-                   className={`card-selection ${state.selections['final_terms'] === key ? 'selected' : ''}`}
-
-                >
-                  <h3 className="text-xl font-bold mb-2">{opt.label}</h3>
-                  <div className="mt-auto flex justify-end">
-                    <span className="text-indigo-600 font-bold">Select →</span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
+         {state.currentStep === 'final_terms' && (
+           <div className="space-y-8">
+             <div className="text-center lg:text-left">
+               <h2 className="text-4xl font-extrabold mb-4">{stepData.question}</h2>
+               <p className="text-muted">Please review and accept the final terms of service.</p>
+             </div>
+             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+               {Object.entries(stepData.options).map(([key, opt]: [string, any]) => (
+                 <div 
+                   key={key}
+                   onClick={() => {
+                     updateSelection('final_terms', key);
+                     setStep(opt.next);
+                   }}
+                    className={`card-selection ${state.selections['final_terms'] === key ? 'selected' : ''}`}
+                 >
+                   <h3 className="text-xl font-bold mb-2">{opt.label}</h3>
+                   <div className="mt-auto flex justify-end">
+                     <span className="text-accent font-bold">Select →</span>
+                   </div>
+                 </div>
+               ))}
+             </div>
+           </div>
+         )}
 
         {/* 5. User Info Form */}
-        {state.currentStep === 'user_info' && (
-          <div className="space-y-8">
-            <div className="text-center lg:text-left">
-              <h2 className="text-4xl font-extrabold mb-4">Final Details</h2>
-              <p className="text-slate-600">Tell us who you are so we can generate your official quote.</p>
-            </div>
-            <form className="max-w-xl space-y-6" onSubmit={(e) => { e.preventDefault(); setStep('summary'); }}>
-              {stepData.fields.map((f: any) => (
-                <div key={f.id} className="flex flex-col gap-2">
-                  <label className="font-semibold text-slate-700">{f.label}</label>
-                  <input
-                    type={f.type}
-                    required={f.required}
-                    className="input-field"
+         {state.currentStep === 'user_info' && (
+           <div className="space-y-8">
+             <div className="text-center lg:text-left">
+               <h2 className="text-4xl font-extrabold mb-4">Final Details</h2>
+               <p className="text-muted">Tell us who you are so we can generate your official quote.</p>
+             </div>
+             <form className="max-w-xl space-y-6" onSubmit={(e) => { e.preventDefault(); setStep('summary'); }}>
+               {stepData.fields.map((f: any) => (
+                 <div key={f.id} className="flex flex-col gap-2">
+                   <label className="font-semibold text-fg">{f.label}</label>
+                   <input
+                     type={f.type}
+                     required={f.required}
+                     className="input-field"
                     value={state.userInfo[f.id as keyof typeof state.userInfo]}
                     onChange={(e) => setUserInfo({ [f.id]: e.target.value })}
                   />
@@ -312,7 +353,7 @@ const App: React.FC = () => {
               ))}
               <button
                 type="submit"
-                className="bg-indigo-600 text-white px-6 py-3 rounded-xl font-semibold transition-all hover:bg-indigo-700 active:scale-95 shadow-md hover:shadow-indigo-200 w-full"
+                className="bg-accent text-surface px-6 py-3 rounded-xl font-semibold transition-all hover:bg-accent-hover active:scale-95 shadow-md hover:shadow-accent/20 w-full"
               >
                 Review Final Quote
               </button>
@@ -325,19 +366,19 @@ const App: React.FC = () => {
           <div className="space-y-8">
             <div className="text-center lg:text-left">
               <h2 className="text-4xl font-extrabold mb-4">Review Your Solution</h2>
-              <p className="text-slate-600">Everything looks ready. One last check before submission.</p>
+              <p className="text-muted">Everything looks ready. One last check before submission.</p>
             </div>
              <div className="card-selection space-y-6">
 
               <div className="grid grid-cols-2 gap-4">
-                <div className="text-slate-500">Company</div>
+                 <div className="text-muted">Company</div>
                 <div className="font-bold">{state.userInfo.company}</div>
-                <div className="text-slate-500">Configuration</div>
+                 <div className="text-muted">Configuration</div>
                 <div className="font-bold">{state.selections['start'] === 'yes' ? 'Fiduciary & Tax' : 'Business Base'}</div>
               </div>
-              <div className="pt-6 border-t border-slate-200 flex justify-between items-center">
+               <div className="pt-6 border-t border-border flex justify-between items-center">
                 <span className="text-xl font-bold">Total MRR</span>
-                <span className="text-3xl font-mono font-extrabold text-indigo-600">${state.totals.mrr}</span>
+                <span className="text-3xl font-mono font-extrabold text-accent">${state.totals.mrr}</span>
               </div>
               <div className="flex justify-end gap-4">
                 <button
@@ -367,7 +408,7 @@ const App: React.FC = () => {
                       alert('Error submitting quote');
                     }
                   }}
-                  className="bg-indigo-600 text-white px-6 py-3 rounded-xl font-semibold transition-all hover:bg-indigo-700 active:scale-95 shadow-md hover:shadow-indigo-200 bg-green-600 hover:bg-green-700"
+                  className="bg-accent text-surface px-6 py-3 rounded-xl font-semibold transition-all hover:bg-accent-hover active:scale-95 shadow-md hover:shadow-accent/20 bg-green-600 hover:bg-green-700"
                 >
                   Submit Quote
                 </button>

@@ -1,4 +1,4 @@
-name: Deploy to LXC
+name: Deploy to Portal VM
 on:
   push:
     branches: [master]
@@ -6,7 +6,8 @@ on:
 
 jobs:
   deploy:
-    runs-on: [self-hosted, h1]
+    # User indicated runner is likely on fl-wd-v13 or fl-wd-h9
+    runs-on: [self-hosted] 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -24,15 +25,19 @@ jobs:
           npm ci
           npm run build
 
-      - name: Push frontend dist into container
+      - name: Deploy to Portal VM
         run: |
-          # Replace XXX with the actual LXC container ID
-          LXC_ID="XXX"
-          TARGET_DIR="/opt/tty-workplace-guide/frontend/dist"
+          # Using rsync to push files to the portal VM
+          # Assumes SSH key is configured on the runner
+          TARGET_USER="root"
+          TARGET_HOST="192.168.75.35"
+          TARGET_DIR="/opt/tty-workplace-guide"
           
-          pct exec $LXC_ID -- rm -rf $TARGET_DIR/assets
-          pct exec $LXC_ID -- mkdir -p $TARGET_DIR/assets
-          pct push $LXC_ID frontend/dist/index.html $TARGET_DIR/index.html
-          for f in $(find frontend/dist/assets/ -type f); do
-            pct push $LXC_ID "$f" $TARGET_DIR/$f && echo "  pushed $f"
-          done
+          echo "Pushing backend..."
+          rsync -avz --exclude 'node_modules' ./backend/ $TARGET_USER@$TARGET_HOST:$TARGET_DIR/backend/
+          
+          echo "Pushing frontend dist..."
+          rsync -avz ./frontend/dist/ $TARGET_USER@$TARGET_HOST:$TARGET_DIR/frontend/
+          
+          echo "Restarting backend..."
+          ssh $TARGET_USER@$TARGET_HOST "pm2 restart tty-backend"

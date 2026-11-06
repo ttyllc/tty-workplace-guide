@@ -6,33 +6,58 @@ import AdminPanel from './components/AdminPanel';
 import ChatBubble from './components/chat/ChatBubble';
 
 const PriceTicker = ({ value }: { value: number }) => {
+  const [displayValue, setDisplayValue] = React.useState(value);
+
+  React.useEffect(() => {
+    let start = displayValue;
+    const end = value;
+    if (start === end) return;
+
+    const duration = 500;
+    const startTime = performance.now();
+
+    const animate = (currentTime: number) => {
+      const elapsed = currentTime - startTime;
+      const progress = Math.min(elapsed / duration, 1);
+      const current = Math.floor(start + (end - start) * progress);
+      
+      setDisplayValue(current);
+
+      if (progress < 1) {
+        requestAnimationFrame(animate);
+      }
+    };
+
+    requestAnimationFrame(animate);
+  }, [value]);
+
   return (
-    <motion.span
-      key={value}
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      className="font-mono font-bold"
-    >
-      ${value}
-    </motion.span>
+    <span className="font-mono font-bold tabular-nums">
+      ${displayValue.toLocaleString()}
+    </span>
   );
 };
 
 const PriceSummary: React.FC<{ totals: { mrr: number; setupFee: number } }> = ({ totals }) => (
-  <div className="p-8 border-b border-slate-200 bg-white">
-    <h3 className="text-xl font-bold mb-6">Quote Summary</h3>
+  <div className="p-8 border-b border-slate-200 bg-white/80 backdrop-blur-md sticky top-0 z-10">
+    <div className="flex items-center justify-between mb-6">
+      <h3 className="text-lg font-bold text-slate-900">Quote Summary</h3>
+      <div className="px-2 py-1 bg-indigo-100 text-indigo-700 text-[10px] font-bold uppercase tracking-wider rounded">
+        Live Estimate
+      </div>
+    </div>
     <div className="space-y-4">
-      <div className="flex justify-between text-slate-600">
-        <span>Monthly Recurring (MRR)</span>
+      <div className="flex justify-between items-center group cursor-default">
+        <span className="text-slate-500 group-hover:text-slate-700 transition-colors">Monthly Recurring</span>
         <PriceTicker value={totals.mrr} />
       </div>
-      <div className="flex justify-between text-slate-600">
-        <span>One-time Setup Fee</span>
+      <div className="flex justify-between items-center group cursor-default">
+        <span className="text-slate-500 group-hover:text-slate-700 transition-colors">One-time Setup</span>
         <PriceTicker value={totals.setupFee} />
       </div>
-      <div className="pt-4 border-t border-slate-200 flex justify-between text-lg font-bold">
-        <span>Estimated Total</span>
-        <div className="text-indigo-600 font-mono">
+      <div className="pt-4 border-t border-slate-100 flex justify-between items-end">
+        <span className="text-sm font-medium text-slate-400">Estimated Total</span>
+        <div className="text-2xl font-bold text-indigo-600 font-mono tabular-nums">
           <PriceTicker value={totals.mrr + totals.setupFee} />
         </div>
       </div>
@@ -41,12 +66,12 @@ const PriceSummary: React.FC<{ totals: { mrr: number; setupFee: number } }> = ({
 );
 
 const AIAssistant: React.FC<{ children: React.ReactNode }> = ({ children }) => (
-  <div className="flex-grow p-8 flex flex-col bg-slate-50">
+  <div className="flex-grow p-8 flex flex-col bg-slate-50 overflow-y-auto">
     <div className="flex items-center gap-3 mb-6">
-      <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center text-white font-bold text-xs">
+      <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center text-white font-bold text-xs shadow-sm shadow-indigo-200">
         AI
       </div>
-      <h4 className="font-bold text-slate-800">Assistant</h4>
+      <h4 className="font-bold text-slate-800 tracking-tight">Assistant</h4>
     </div>
     <div className="flex-grow">
       {children}

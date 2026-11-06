@@ -5,6 +5,55 @@ import logicMap from './data/logicMap.json';
 import AdminPanel from './components/AdminPanel';
 import ChatBubble from './components/chat/ChatBubble';
 
+const StepProgress: React.FC<{ currentStep: string }> = ({ currentStep }) => {
+  const steps = [
+    { id: 'start', label: 'Path' },
+    { id: 'bundle', label: 'Bundle' },
+    { id: 'addons', label: 'Add-ons' },
+    { id: 'terms', label: 'Terms' },
+    { id: 'info', label: 'Details' },
+    { id: 'summary', label: 'Review' },
+  ];
+
+  const getStepIndex = (step: string) => {
+    if (step === 'start') return 0;
+    if (step === 'flavor_a' || step === 'flavor_b') return 1;
+    if (step === 'regulated_addons' || step === 'common_addons') return 2;
+    if (step === 'final_terms') return 3;
+    if (step === 'user_info') return 4;
+    if (step === 'summary') return 5;
+    return -1;
+  };
+
+  const currentIndex = getStepIndex(currentStep);
+
+  return (
+    <div className="flex items-center gap-2 mb-8 overflow-x-auto pb-2">
+      {steps.map((step, i) => (
+        <div key={step.id} className="flex items-center gap-2">
+          <div className={`flex items-center justify-center w-6 h-6 rounded-full text-[10px] font-bold transition-colors ${
+            i <= currentIndex ? 'bg-accent text-white' : 'bg-slate-200 text-slate-500'
+          }`}>
+            {i + 1}
+          </div>
+          {step.label && (
+            <span className={`text-xs font-medium whitespace-nowrap transition-colors ${
+              i === currentIndex ? 'text-accent font-bold' : 'text-slate-400'
+            }`}>
+              {step.label}
+            </span>
+          )}
+          {i < steps.length - 1 && (
+            <div className={`w-8 h-px mx-2 transition-colors ${
+              i < currentIndex ? 'bg-accent' : 'bg-slate-200'
+            }`} />
+          )}
+        </div>
+      ))}
+    </div>
+  );
+};
+
 const PriceTicker = ({ value }: { value: number }) => {
   const [displayValue, setDisplayValue] = React.useState(value);
 
@@ -39,25 +88,25 @@ const PriceTicker = ({ value }: { value: number }) => {
 };
 
 const PriceSummary: React.FC<{ totals: { mrr: number; setupFee: number } }> = ({ totals }) => (
-  <div className="p-8 border-b border-slate-200 bg-white/80 backdrop-blur-md sticky top-0 z-10">
+  <div className="p-8 border-b border-border bg-surface/80 backdrop-blur-md sticky top-0 z-10">
     <div className="flex items-center justify-between mb-6">
-      <h3 className="text-lg font-bold text-slate-900">Quote Summary</h3>
-      <div className="px-2 py-1 bg-indigo-100 text-indigo-700 text-[10px] font-bold uppercase tracking-wider rounded">
+      <h3 className="text-lg font-bold text-fg">Quote Summary</h3>
+      <div className="px-2 py-1 bg-accent/20 text-accent text-[10px] font-bold uppercase tracking-wider rounded">
         Live Estimate
       </div>
     </div>
     <div className="space-y-4">
       <div className="flex justify-between items-center group cursor-default">
-        <span className="text-slate-500 group-hover:text-slate-700 transition-colors">Monthly Recurring</span>
+        <span className="text-muted group-hover:text-fg transition-colors">Monthly Recurring</span>
         <PriceTicker value={totals.mrr} />
       </div>
       <div className="flex justify-between items-center group cursor-default">
-        <span className="text-slate-500 group-hover:text-slate-700 transition-colors">One-time Setup</span>
+        <span className="text-muted group-hover:text-fg transition-colors">One-time Setup</span>
         <PriceTicker value={totals.setupFee} />
       </div>
-      <div className="pt-4 border-t border-slate-100 flex justify-between items-end">
-        <span className="text-sm font-medium text-slate-400">Estimated Total</span>
-        <div className="text-2xl font-bold text-indigo-600 font-mono tabular-nums">
+      <div className="pt-4 border-t border-border flex justify-between items-end">
+        <span className="text-sm font-medium text-muted">Estimated Total</span>
+        <div className="text-2xl font-bold text-accent font-mono tabular-nums">
           <PriceTicker value={totals.mrr + totals.setupFee} />
         </div>
       </div>
@@ -66,12 +115,12 @@ const PriceSummary: React.FC<{ totals: { mrr: number; setupFee: number } }> = ({
 );
 
 const AIAssistant: React.FC<{ children: React.ReactNode }> = ({ children }) => (
-  <div className="flex-grow p-8 flex flex-col bg-slate-50 overflow-y-auto">
+  <div className="flex-grow p-8 flex flex-col bg-bg overflow-y-auto">
     <div className="flex items-center gap-3 mb-6">
-      <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center text-white font-bold text-xs shadow-sm shadow-indigo-200">
+      <div className="w-8 h-8 bg-accent rounded-lg flex items-center justify-center text-white font-bold text-xs shadow-sm shadow-accent/20">
         AI
       </div>
-      <h4 className="font-bold text-slate-800 tracking-tight">Assistant</h4>
+      <h4 className="font-bold text-fg tracking-tight">Assistant</h4>
     </div>
     <div className="flex-grow">
       {children}
@@ -114,7 +163,8 @@ const App: React.FC = () => {
                     updateSelection('start', key);
                     setStep(opt.target);
                   }}
-                  className={`card-selection ${state.selections['start'] === key ? 'selected' : ''}`}
+                   className={`card-selection ${state.selections['start'] === key ? 'selected' : ''}`}
+
                 >
                   <h3 className="text-xl font-bold mb-2">{opt.label}</h3>
                   <p className="text-slate-500 text-sm mb-4">Click to select this configuration path.</p>
@@ -134,7 +184,8 @@ const App: React.FC = () => {
               <h2 className="text-4xl font-extrabold mb-4">{stepData.bundle.name}</h2>
               <p className="text-slate-600">The ideal foundation for your business infrastructure.</p>
             </div>
-            <div className="card-selection border-indigo-100 bg-indigo-50/10">
+             <div className="card-selection border-accent/20 bg-accent/5">
+
               <ul className="space-y-4 mb-8">
                 {stepData.bundle.features.map((f: string, i: number) => (
                   <li key={i} className="flex items-center gap-3 text-slate-700">
@@ -165,8 +216,9 @@ const App: React.FC = () => {
               <p className="text-slate-600">Tailor your package with specific add-ons and capacities.</p>
             </div>
             <div className="grid gap-4">
-              {stepData.questions.map((q: any) => (
-                <div key={q.id} className="card-selection items-center justify-between flex p-4">
+               {stepData.questions.map((q: any) => (
+                 <div key={q.id} className="card-selection items-center justify-between flex p-4">
+
                   <div className="flex flex-col">
                     <label className="text-lg font-semibold">{q.text}</label>
                     {q.desc && <p className="text-sm text-slate-500">{q.desc}</p>}
@@ -225,7 +277,8 @@ const App: React.FC = () => {
                     updateSelection('final_terms', key);
                     setStep(opt.next);
                   }}
-                  className={`card-selection ${state.selections['final_terms'] === key ? 'selected' : ''}`}
+                   className={`card-selection ${state.selections['final_terms'] === key ? 'selected' : ''}`}
+
                 >
                   <h3 className="text-xl font-bold mb-2">{opt.label}</h3>
                   <div className="mt-auto flex justify-end">
@@ -259,7 +312,7 @@ const App: React.FC = () => {
               ))}
               <button
                 type="submit"
-                className="btn-primary w-full"
+                className="bg-indigo-600 text-white px-6 py-3 rounded-xl font-semibold transition-all hover:bg-indigo-700 active:scale-95 shadow-md hover:shadow-indigo-200 w-full"
               >
                 Review Final Quote
               </button>
@@ -274,7 +327,8 @@ const App: React.FC = () => {
               <h2 className="text-4xl font-extrabold mb-4">Review Your Solution</h2>
               <p className="text-slate-600">Everything looks ready. One last check before submission.</p>
             </div>
-            <div className="card-selection space-y-6">
+             <div className="card-selection space-y-6">
+
               <div className="grid grid-cols-2 gap-4">
                 <div className="text-slate-500">Company</div>
                 <div className="font-bold">{state.userInfo.company}</div>
@@ -313,7 +367,7 @@ const App: React.FC = () => {
                       alert('Error submitting quote');
                     }
                   }}
-                  className="btn-primary bg-green-600 hover:bg-green-700"
+                  className="bg-indigo-600 text-white px-6 py-3 rounded-xl font-semibold transition-all hover:bg-indigo-700 active:scale-95 shadow-md hover:shadow-indigo-200 bg-green-600 hover:bg-green-700"
                 >
                   Submit Quote
                 </button>
@@ -326,19 +380,22 @@ const App: React.FC = () => {
   };
 
   return (
-    <div className="app-container">
-      <div className="config-panel">
-        <header className="mb-12">
-          <h1 className="text-4xl font-extrabold text-slate-900 mb-2">Workplace Solutions Guide</h1>
-          <p className="text-slate-600">Design your compliant business infrastructure.</p>
-        </header>
-        <AnimatePresence mode="wait">
+        <div className="grid grid-cols-1 lg:grid-cols-[1fr_400px] h-screen overflow-hidden">
+          <div className="overflow-y-auto p-8 lg:p-12 border-r border-border bg-surface">
+            <header className="mb-12">
+              <h1 className="text-4xl font-extrabold text-fg mb-2">Workplace Solutions Guide</h1>
+              <p className="text-muted">Design your compliant business infrastructure.</p>
+            </header>
+            <StepProgress currentStep={state.currentStep} />
+            <AnimatePresence mode="wait">
+
           {renderStep()}
         </AnimatePresence>
       </div>
-      <div className="summary-panel">
-        <PriceSummary totals={state.totals} />
-        <AIAssistant>
+        <div className="bg-bg flex flex-col border-l border-border">
+          <PriceSummary totals={state.totals} />
+          <AIAssistant>
+
           <ChatBubble quoteContext={{ selections: state.selections, totals: state.totals }} />
         </AIAssistant>
       </div>

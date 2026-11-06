@@ -1,0 +1,38 @@
+name: Deploy to LXC
+on:
+  push:
+    branches: [master]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: [self-hosted, h1]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Build frontend
+        run: |
+          cd frontend
+          npm ci
+          npm run build
+
+      - name: Push frontend dist into container
+        run: |
+          # Replace XXX with the actual LXC container ID
+          LXC_ID="XXX"
+          TARGET_DIR="/opt/tty-workplace-guide/frontend/dist"
+          
+          pct exec $LXC_ID -- rm -rf $TARGET_DIR/assets
+          pct exec $LXC_ID -- mkdir -p $TARGET_DIR/assets
+          pct push $LXC_ID frontend/dist/index.html $TARGET_DIR/index.html
+          for f in $(find frontend/dist/assets/ -type f); do
+            pct push $LXC_ID "$f" $TARGET_DIR/$f && echo "  pushed $f"
+          done

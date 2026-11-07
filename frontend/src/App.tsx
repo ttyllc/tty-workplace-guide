@@ -4,7 +4,7 @@ import { useQuote } from './hooks/useQuote';
 import logicMap from './data/logicMap.json';
 import AdminPanel from './components/AdminPanel';
 import ChatBubble from './components/chat/ChatBubble';
-import LandingPage from './components/layout/LandingPage';
+import LandingPage from './components/LandingPage';
 
 const StepProgress: React.FC<{ currentStep: string }> = ({ currentStep }) => {
   const steps = [
@@ -211,13 +211,10 @@ const App: React.FC = () => {
                      <span className="text-accent font-bold">Select →</span>
                    </div>
                  </div>
-               ))}
-             </div>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
-          </div>
-        )}
+          )}
 
         {/* 2. Bundle Confirmation / Info */}
         {(state.currentStep === 'flavor_a' || state.currentStep === 'flavor_b') && (
@@ -257,7 +254,7 @@ const App: React.FC = () => {
                <h2 className="text-4xl font-extrabold mb-4">Customize Your Solution</h2>
                <p className="text-muted">Tailor your package with specific add-ons and capacities.</p>
              </div>
-             <div className="grid gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {stepData.questions.map((q: any) => (
                   <div key={q.id} className="card-selection items-center justify-between flex p-4">
  

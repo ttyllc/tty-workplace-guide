@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { useQuote } from './hooks/useQuote';
 import logicMap from './data/logicMap.json';
 import AdminPanel from './components/AdminPanel';
@@ -172,7 +172,7 @@ const AIAssistant: React.FC<{ children: React.ReactNode }> = ({ children }) => (
 
 const App: React.FC = () => {
   const [showLanding, setShowLanding] = useState(true);
-  const { state, updateSelection, setStep, setUserInfo } = useQuote();
+  const { state, updateSelection, setUserInfo } = useQuote();
 
   if (window.location.pathname === '/admin') {
     return <AdminPanel />;

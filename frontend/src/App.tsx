@@ -156,7 +156,6 @@ const PriceSummary: React.FC<{ totals: { mrr: number; setupFee: number } }> = ({
   );
 };
 
-
 const AIAssistant: React.FC<{ children: React.ReactNode }> = ({ children }) => (
   <div className="flex-grow p-8 flex flex-col ai-panel-bg overflow-y-auto">
     <div className="flex items-center gap-3 mb-6">
@@ -173,7 +172,7 @@ const AIAssistant: React.FC<{ children: React.ReactNode }> = ({ children }) => (
 
 const App: React.FC = () => {
   const [showLanding, setShowLanding] = useState(true);
-  const { state, updateSelection, setUserInfo } = useQuote();
+  const { state, updateSelection, setStep, setUserInfo } = useQuote();
 
   if (window.location.pathname === '/admin') {
     return <AdminPanel />;
@@ -183,50 +182,57 @@ const App: React.FC = () => {
     return <LandingPage onStartConfigurator={() => setShowLanding(false)} />;
   }
 
-  const renderConfigurator = () => {
-    const startData = logicMap.start;
-    const path = state.selections['start'];
-    const selectedBundle = path === 'yes' ? logicMap.flavor_b.bundle : logicMap.flavor_a.bundle;
-    const regulatedAddons = logicMap.regulated_addons;
-    const commonAddons = logicMap.common_addons;
-    const termsData = logicMap.final_terms;
-    const userData = logicMap.user_info;
+  const renderStep = () => {
+    const stepData = logicMap[state.currentStep as keyof typeof logicMap] as any;
+    if (!stepData) return <div className="p-8 text-center">Step not found</div>;
 
     return (
-      <div className="space-y-20 pb-32">
-        {/* Section 1: Business Path */}
-        <section className="space-y-8">
-          <div className="text-center lg:text-left">
-            <h2 className="text-4xl font-extrabold mb-4">{startData.question}</h2>
-            <p className="text-muted">Select the path that best describes your business needs.</p>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {Object.entries(startData.options).map(([key, opt]: [string, any]) => (
-              <div 
-                key={key}
-                onClick={() => updateSelection('start', key)}
-                className={`card-selection ${path === key ? 'selected' : ''}`}
-              >
-                <h3 className="text-xl font-bold mb-2">{opt.label}</h3>
-                <p className="text-muted text-sm mb-4">Click to select this configuration path.</p>
-                <div className="mt-auto flex justify-end">
-                  <span className="text-accent font-bold">Select →</span>
-                </div>
-              </div>
-            ))}
-          </div>
-        </section>
-
-        {/* Section 2: Selected Bundle */}
-        {path && (
-          <section className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+      <motion.div 
+        key={state.currentStep}
+        initial={{ opacity: 0, x: 20 }}
+        animate={{ opacity: 1, x: 0 }}
+        exit={{ opacity: 0, x: -20 }}
+        transition={{ duration: 0.3 }}
+        className="space-y-12"
+      >
+        {/* 1. Initial Question */}
+        {state.currentStep === 'start' && (
+          <div className="space-y-8">
             <div className="text-center lg:text-left">
-              <h2 className="text-4xl font-extrabold mb-4">{selectedBundle.name}</h2>
+              <h2 className="text-4xl font-extrabold mb-4">{stepData.question}</h2>
+              <p className="text-muted">Select the path that best describes your business needs.</p>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {Object.entries(stepData.options).map(([key, opt]: [string, any]) => (
+                <div 
+                  key={key}
+                  onClick={() => {
+                    updateSelection('start', key);
+                    setStep(opt.target);
+                  }}
+                  className={`card-selection ${state.selections['start'] === key ? 'selected' : ''}`}
+                >
+                  <h3 className="text-xl font-bold mb-2">{opt.label}</h3>
+                  <p className="text-muted text-sm mb-4">Click to select this configuration path.</p>
+                  <div className="mt-auto flex justify-end">
+                    <span className="text-accent font-bold">Select →</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* 2. Bundle Confirmation / Info */}
+        {(state.currentStep === 'flavor_a' || state.currentStep === 'flavor_b') && (
+          <div className="space-y-8">
+            <div className="text-center lg:text-left">
+              <h2 className="text-4xl font-extrabold mb-4">{stepData.bundle.name}</h2>
               <p className="text-muted">The ideal foundation for your business infrastructure.</p>
             </div>
             <div className="card-selection border-accent/20 bg-accent/5">
               <ul className="space-y-4 mb-8">
-                {selectedBundle.features.map((f: string, i: number) => (
+                {stepData.bundle.features.map((f: string, i: number) => (
                   <li key={i} className="flex items-center gap-3 text-fg">
                     <span className="text-accent bg-accent/10 rounded-full p-1">
                       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
@@ -235,92 +241,86 @@ const App: React.FC = () => {
                   </li>
                 ))}
               </ul>
+              <div className="flex justify-end">
+                <button
+                  onClick={() => setStep(stepData.next)}
+                  className="btn-primary"
+                >
+                  Continue to Add-ons
+                </button>
+              </div>
             </div>
-          </section>
+          </div>
         )}
 
-        {/* Section 3: Add-ons */}
-        {path && (
-          <section className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+        {/* 3. Add-ons */}
+        {(state.currentStep === 'regulated_addons' || state.currentStep === 'common_addons') && (
+          <div className="space-y-8">
             <div className="text-center lg:text-left">
               <h2 className="text-4xl font-extrabold mb-4">Customize Your Solution</h2>
               <p className="text-muted">Tailor your package with specific add-ons and capacities.</p>
             </div>
-            
-            <div className="space-y-12">
-              {/* Regulated Add-ons (Conditional) */}
-              {path === 'yes' && (
-                <div className="space-y-6">
-                  <h3 className="text-xl font-bold text-fg uppercase tracking-wider">Regulatory Requirements</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {regulatedAddons.questions.map((q: any) => (
-                    <div 
-                      key={q.id} 
-                      onClick={() => q.type === 'boolean' && updateSelection(q.id, !state.selections[q.id])}
-                      className={`card-row ${state.selections[q.id] ? 'selected' : ''}`}
-                    >
-                      <div className="flex flex-col">
-                        <label className="text-lg font-semibold">{q.text}</label>
-                        {q.desc && <p className="text-sm text-muted">{q.desc}</p>}
-                      </div>
-                      {q.type === 'integer' ? (
-                        <div className="flex items-center gap-3" onClick={(e) => e.stopPropagation()}>
-                          <button onClick={() => updateSelection(q.id, Math.max(0, (state.selections[q.id] || 0) - 1))} className="w-8 h-8 rounded-lg border border-border flex items-center justify-center hover:bg-surface">-</button>
-                          <input type="number" className="w-12 p-2 border rounded text-center font-mono font-bold bg-transparent" value={state.selections[q.id] || 0} onChange={(e) => updateSelection(q.id, parseInt(e.target.value) || 0)} />
-                          <button onClick={() => updateSelection(q.id, (state.selections[q.id] || 0) + 1)} className="w-8 h-8 rounded-lg border border-border flex items-center justify-center hover:bg-surface">+</button>
-                        </div>
-                      ) : (
-                        <input type="checkbox" className="w-6 h-6 rounded border-border text-accent focus:ring-accent" checked={!!state.selections[q.id]} onChange={(e) => updateSelection(q.id, e.target.checked)} onClick={(e) => e.stopPropagation()} />
-                      )}
-                    </div>
-                    ))}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {stepData.questions.map((q: any) => (
+                <div key={q.id} className="card-selection items-center justify-between flex p-4">
+                  <div className="flex flex-col">
+                    <label className="text-lg font-semibold">{q.text}</label>
+                    {q.desc && <p className="text-sm text-muted">{q.desc}</p>}
                   </div>
-                </div>
-              )}
-
-              {/* Common Add-ons */}
-              <div className="space-y-6">
-                <h3 className="text-xl font-bold text-fg uppercase tracking-wider">Common Enhancements</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {commonAddons.questions.map((q: any) => (
-                    <div 
-                      key={q.id} 
-                      onClick={() => q.type === 'boolean' && updateSelection(q.id, !state.selections[q.id])}
-                      className={`card-row ${state.selections[q.id] ? 'selected' : ''}`}
-                    >
-                      <div className="flex flex-col">
-                        <label className="text-lg font-semibold">{q.text}</label>
-                        {q.desc && <p className="text-sm text-muted">{q.desc}</p>}
-                      </div>
-                      {q.type === 'integer' ? (
-                        <div className="flex items-center gap-3" onClick={(e) => e.stopPropagation()}>
-                          <button onClick={() => updateSelection(q.id, Math.max(0, (state.selections[q.id] || 0) - 1))} className="w-8 h-8 rounded-lg border border-border flex items-center justify-center hover:bg-surface">-</button>
-                          <input type="number" className="w-12 p-2 border rounded text-center font-mono font-bold bg-transparent" value={state.selections[q.id] || 0} onChange={(e) => updateSelection(q.id, parseInt(e.target.value) || 0)} />
-                          <button onClick={() => updateSelection(q.id, (state.selections[q.id] || 0) + 1)} className="w-8 h-8 rounded-lg border border-border flex items-center justify-center hover:bg-surface">+</button>
-                        </div>
-                      ) : (
-                        <input type="checkbox" className="w-6 h-6 rounded border-border text-accent focus:ring-accent" checked={!!state.selections[q.id]} onChange={(e) => updateSelection(q.id, e.target.checked)} onClick={(e) => e.stopPropagation()} />
-                      )}
+                  {q.type === 'integer' ? (
+                    <div className="flex items-center gap-3">
+                      <button 
+                        onClick={() => updateSelection(q.id, Math.max(0, (state.selections[q.id] || 0) - 1))}
+                        className="w-8 h-8 rounded-lg border border-border flex items-center justify-center hover:bg-surface"
+                      >-</button>
+                      <input
+                        type="number"
+                        className="w-12 p-2 border rounded text-center font-mono font-bold"
+                        value={state.selections[q.id] || 0}
+                        onChange={(e) => updateSelection(q.id, parseInt(e.target.value) || 0)}
+                      />
+                      <button 
+                        onClick={() => updateSelection(q.id, (state.selections[q.id] || 0) + 1)}
+                        className="w-8 h-8 rounded-lg border border-border flex items-center justify-center hover:bg-surface"
+                      >+</button>
                     </div>
-                  ))}
+                  ) : (
+                    <input
+                      type="checkbox"
+                      className="w-6 h-6 rounded border-border text-accent focus:ring-accent"
+                      checked={!!state.selections[q.id]}
+                      onChange={(e) => updateSelection(q.id, e.target.checked)}
+                    />
+                  )}
                 </div>
-              </div>
+              ))}
             </div>
-          </section>
+            <div className="flex justify-end">
+              <button
+                onClick={() => setStep(stepData.next)}
+                className="btn-primary"
+              >
+                Next Step
+              </button>
+            </div>
+          </div>
         )}
 
-        {/* Section 4: Final Terms */}
-        {path && (
-          <section className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+        {/* 4. Final Terms */}
+        {state.currentStep === 'final_terms' && (
+          <div className="space-y-8">
             <div className="text-center lg:text-left">
-              <h2 className="text-4xl font-extrabold mb-4">{termsData.question}</h2>
+              <h2 className="text-4xl font-extrabold mb-4">{stepData.question}</h2>
               <p className="text-muted">Please review and accept the final terms of service.</p>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {Object.entries(termsData.options).map(([key, opt]: [string, any]) => (
+              {Object.entries(stepData.options).map(([key, opt]: [string, any]) => (
                 <div 
                   key={key}
-                  onClick={() => updateSelection('final_terms', key)}
+                  onClick={() => {
+                    updateSelection('final_terms', key);
+                    setStep(opt.next);
+                  }}
                   className={`card-selection ${state.selections['final_terms'] === key ? 'selected' : ''}`}
                 >
                   <h3 className="text-xl font-bold mb-2">{opt.label}</h3>
@@ -330,18 +330,18 @@ const App: React.FC = () => {
                 </div>
               ))}
             </div>
-          </section>
+          </div>
         )}
 
-        {/* Section 5: User Info Form */}
-        {path && state.selections['final_terms'] && (
-          <section className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+        {/* 5. User Info Form */}
+        {state.currentStep === 'user_info' && (
+          <div className="space-y-8">
             <div className="text-center lg:text-left">
               <h2 className="text-4xl font-extrabold mb-4">Final Details</h2>
               <p className="text-muted">Tell us who you are so we can generate your official quote.</p>
             </div>
-            <form className="max-w-xl space-y-6" onSubmit={(e) => e.preventDefault()}>
-              {userData.fields.map((f: any) => (
+            <form className="max-w-xl space-y-6" onSubmit={(e) => { e.preventDefault(); setStep('summary'); }}>
+              {stepData.fields.map((f: any) => (
                 <div key={f.id} className="flex flex-col gap-2">
                   <label className="font-semibold text-fg">{f.label}</label>
                   <input
@@ -355,70 +355,64 @@ const App: React.FC = () => {
               ))}
               <button
                 type="submit"
-                onClick={async () => {
-                  const payload = {
-                    ...state.userInfo,
-                    bundle: path === 'yes' ? 'Flavor B' : 'Flavor A',
-                    addons: state.selections,
-                    mrr: state.totals.mrr,
-                    setup_fee: state.totals.setupFee,
-                    agreement: state.selections['final_terms'] === 'yes',
-                  };
-                  try {
-                    const res = await fetch('/api/leads', {
-                      method: 'POST',
-                      headers: { 'Content-Type': 'application/json' },
-                      body: JSON.stringify(payload),
-                    });
-                    if (res.ok) alert('Quote submitted successfully!');
-                  } catch (e) {
-                    alert('Error submitting quote');
-                  }
-                }}
                 className="btn-primary w-full"
               >
-                Submit Final Quote
+                Review Final Quote
               </button>
             </form>
-          </section>
+          </div>
         )}
-      </div>
-    );
-  };
 
-  return (
-    <div className="grid grid-cols-1 lg:grid-cols-[1fr_400px] h-screen overflow-hidden">
-      <div className="overflow-y-auto p-8 lg:p-12 border-r border-border bg-surface">
-        <header className="mb-12">
-          <h1 className="text-4xl font-extrabold text-fg mb-2">Workplace Solutions Guide</h1>
-          <p className="text-muted">Design your compliant business infrastructure.</p>
-        </header>
-        {renderConfigurator()}
-      </div>
-      <div className="bg-bg flex flex-col border-l border-border">
-        <PriceSummary totals={state.totals} />
-        <AIAssistant>
-          <ChatBubble quoteContext={{ selections: state.selections, totals: state.totals }} />
-        </AIAssistant>
-      </div>
-    </div>
-  );
-};
-                     try {
-                       const res = await fetch('/api/leads', {
-                         method: 'POST',
-                         headers: { 'Content-Type': 'application/json' },
-                         body: JSON.stringify(payload),
-                       });
-                       if (res.ok) alert('Quote submitted successfully!');
-                     } catch (e) {
-                       alert('Error submitting quote');
-                     }
-                   }}
-                   className="btn-primary"
-                 >
-                   Submit Quote
-                 </button>
+        {/* 6. Summary & Submission */}
+        {state.currentStep === 'summary' && (
+          <div className="space-y-8">
+            <div className="text-center lg:text-left">
+              <h2 className="text-4xl font-extrabold mb-4">Review Your Solution</h2>
+              <p className="text-muted">Everything looks ready. One last check before submission.</p>
+            </div>
+            <div className="card-selection space-y-6">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="text-muted">Company</div>
+                <div className="font-bold">{state.userInfo.company}</div>
+                <div className="text-muted">Configuration</div>
+                <div className="font-bold">{state.selections['start'] === 'yes' ? 'Fiduciary & Tax' : 'Business Base'}</div>
+              </div>
+              <div className="pt-6 border-t border-border flex justify-between items-center">
+                <span className="text-xl font-bold">Total MRR</span>
+                <span className="text-3xl font-mono font-extrabold text-accent">${state.totals.mrr}</span>
+              </div>
+              <div className="flex justify-end gap-4">
+                <button
+                  onClick={() => setStep('user_info')}
+                  className="btn-secondary"
+                >
+                  Edit Info
+                </button>
+                <button
+                  onClick={async () => {
+                    const payload = {
+                      ...state.userInfo,
+                      bundle: state.selections['start'] === 'yes' ? 'Flavor B' : 'Flavor A',
+                      addons: state.selections,
+                      mrr: state.totals.mrr,
+                      setup_fee: state.totals.setupFee,
+                      agreement: state.selections['final_terms'] === 'yes',
+                    };
+                    try {
+                      const res = await fetch('/api/leads', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload),
+                      });
+                      if (res.ok) alert('Quote submitted successfully!');
+                    } catch (e) {
+                      alert('Error submitting quote');
+                    }
+                  }}
+                  className="btn-primary"
+                >
+                  Submit Quote
+                </button>
               </div>
             </div>
           </div>
@@ -428,29 +422,28 @@ const App: React.FC = () => {
   };
 
   return (
-        <div className="flex flex-col h-screen overflow-hidden">
-          <LiveTicker />
-          <div className="grid grid-cols-1 lg:grid-cols-[1fr_400px] flex-grow overflow-hidden">
-            <div className="overflow-y-auto p-8 lg:p-12 border-r border-border bg-surface">
-              <header className="mb-12">
-                <h1 className="text-4xl font-extrabold text-fg mb-2">Workplace Solutions Guide</h1>
-                <p className="text-muted">Design your compliant business infrastructure.</p>
-              </header>
-              <StepProgress currentStep={state.currentStep} />
-              <AnimatePresence mode="wait">
-                {renderStep()}
-              </AnimatePresence>
-            </div>
-            <div className="bg-bg flex flex-col border-l border-border">
-              <PriceSummary totals={state.totals} />
-              <AIAssistant>
-                <ChatBubble quoteContext={{ selections: state.selections, totals: state.totals }} />
-              </AIAssistant>
-            </div>
-          </div>
+    <div className="flex flex-col h-screen overflow-hidden">
+      <LiveTicker />
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr_400px] flex-grow overflow-hidden">
+        <div className="overflow-y-auto p-8 lg:p-12 border-r border-border bg-surface">
+          <header className="mb-12">
+            <h1 className="text-4xl font-extrabold text-fg mb-2">Workplace Solutions Guide</h1>
+            <p className="text-muted">Design your compliant business infrastructure.</p>
+          </header>
+          <StepProgress currentStep={state.currentStep} />
+          <AnimatePresence mode="wait">
+            {renderStep()}
+          </AnimatePresence>
         </div>
+        <div className="bg-bg flex flex-col border-l border-border">
+          <PriceSummary totals={state.totals} />
+          <AIAssistant>
+            <ChatBubble quoteContext={{ selections: state.selections, totals: state.totals }} />
+          </AIAssistant>
+        </div>
+      </div>
+    </div>
   );
-
 };
 
 export default App;

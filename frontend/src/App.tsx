@@ -5,6 +5,7 @@ import logicMap from './data/logicMap.json';
 import AdminPanel from './components/AdminPanel';
 import ChatBubble from './components/chat/ChatBubble';
 import LandingPage from './components/LandingPage';
+import LiveTicker from './components/LiveTicker';
 
 const StepProgress: React.FC<{ currentStep: string }> = ({ currentStep }) => {
   const steps = [
@@ -96,9 +97,15 @@ const PriceTicker = ({ value }: { value: number }) => {
   }, [value]);
 
   return (
-    <span className="font-mono font-bold tabular-nums">
+    <motion.span 
+      key={value}
+      initial={{ scale: 0.9, opacity: 0.8 }}
+      animate={{ scale: 1, opacity: 1 }}
+      transition={{ duration: 0.2 }}
+      className="font-mono font-bold tabular-nums inline-block"
+    >
       ${displayValue.toLocaleString()}
-    </span>
+    </motion.span>
   );
 };
 
@@ -106,48 +113,49 @@ const PriceSummary: React.FC<{ totals: { mrr: number; setupFee: number } }> = ({
   const grandTotal = totals.mrr + totals.setupFee;
   
   return (
-    <div className="p-8 border-b border-border bg-surface/80 backdrop-blur-md sticky top-0 z-10">
+    <div className="p-8 border-b border-border bg-surface/40 backdrop-blur-xl sticky top-0 z-10 shadow-sm">
       <div className="flex items-center justify-between mb-8">
-        <h3 className="text-sm font-bold text-fg uppercase tracking-widest">Quote Summary</h3>
+        <h3 className="text-xs font-black text-muted uppercase tracking-[0.2em]">Quote Summary</h3>
         <div className="flex items-center gap-2 px-2 py-1 bg-accent/10 text-accent text-[9px] font-bold uppercase tracking-tighter rounded-full border border-accent/20">
           <span className="w-1.5 h-1.5 rounded-full bg-accent animate-pulse" />
           Live Estimate
         </div>
       </div>
       
-      <div className="space-y-3">
+      <div className="space-y-4">
         <div className="flex justify-between items-center group cursor-default">
-          <span className="text-sm text-muted group-hover:text-fg transition-colors duration-200">Monthly Recurring</span>
+          <span className="text-sm text-muted group-hover:text-fg transition-colors duration-200 font-medium">Monthly Recurring</span>
           <PriceTicker value={totals.mrr} />
         </div>
         <div className="flex justify-between items-center group cursor-default">
-          <span className="text-sm text-muted group-hover:text-fg transition-colors duration-200">One-time Setup</span>
+          <span className="text-sm text-muted group-hover:text-fg transition-colors duration-200 font-medium">One-time Setup</span>
           <PriceTicker value={totals.setupFee} />
         </div>
         
         <div className="pt-6 mt-6 border-t border-border flex justify-between items-end">
-          <span className="text-xs font-bold text-muted uppercase tracking-wider">Estimated Total</span>
-           <motion.div 
-             key={grandTotal}
-             initial={{ scale: 0.98, opacity: 0.8 }}
-             animate={{ scale: 1, opacity: 1 }}
-             transition={{ type: "spring", stiffness: 400, damping: 25 }}
-             className="text-3xl font-black text-accent font-mono tabular-nums tracking-tighter relative"
-           >
-             <PriceTicker value={grandTotal} />
-             <motion.div 
-               initial={{ opacity: 0, scale: 0.8 }}
-               animate={{ opacity: 0.3, scale: 1.2 }}
-               exit={{ opacity: 0, scale: 0.8 }}
-               transition={{ duration: 0.4 }}
-               className="absolute inset-0 bg-accent blur-xl -z-10"
-             />
-           </motion.div>
+          <span className="text-xs font-black text-muted uppercase tracking-widest">Estimated Total</span>
+            <motion.div 
+              key={grandTotal}
+              initial={{ scale: 0.98, opacity: 0.8 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ type: "spring", stiffness: 400, damping: 25 }}
+              className="text-4xl font-black text-accent font-mono tabular-nums tracking-tighter relative"
+            >
+              <PriceTicker value={grandTotal} />
+              <motion.div 
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 0.4, scale: 1.3 }}
+                exit={{ opacity: 0, scale: 0.8 }}
+                transition={{ duration: 0.4 }}
+                className="absolute inset-0 bg-accent blur-2xl -z-10"
+              />
+            </motion.div>
         </div>
       </div>
     </div>
   );
 };
+
 
 const AIAssistant: React.FC<{ children: React.ReactNode }> = ({ children }) => (
   <div className="flex-grow p-8 flex flex-col ai-panel-bg overflow-y-auto">
@@ -418,27 +426,29 @@ const App: React.FC = () => {
   };
 
   return (
-        <div className="grid grid-cols-1 lg:grid-cols-[1fr_400px] h-screen overflow-hidden">
-          <div className="overflow-y-auto p-8 lg:p-12 border-r border-border bg-surface">
-            <header className="mb-12">
-              <h1 className="text-4xl font-extrabold text-fg mb-2">Workplace Solutions Guide</h1>
-              <p className="text-muted">Design your compliant business infrastructure.</p>
-            </header>
-            <StepProgress currentStep={state.currentStep} />
-            <AnimatePresence mode="wait">
-
-          {renderStep()}
-        </AnimatePresence>
-      </div>
-        <div className="bg-bg flex flex-col border-l border-border">
-          <PriceSummary totals={state.totals} />
-          <AIAssistant>
-
-          <ChatBubble quoteContext={{ selections: state.selections, totals: state.totals }} />
-        </AIAssistant>
-      </div>
-    </div>
+        <div className="flex flex-col h-screen overflow-hidden">
+          <LiveTicker />
+          <div className="grid grid-cols-1 lg:grid-cols-[1fr_400px] flex-grow overflow-hidden">
+            <div className="overflow-y-auto p-8 lg:p-12 border-r border-border bg-surface">
+              <header className="mb-12">
+                <h1 className="text-4xl font-extrabold text-fg mb-2">Workplace Solutions Guide</h1>
+                <p className="text-muted">Design your compliant business infrastructure.</p>
+              </header>
+              <StepProgress currentStep={state.currentStep} />
+              <AnimatePresence mode="wait">
+                {renderStep()}
+              </AnimatePresence>
+            </div>
+            <div className="bg-bg flex flex-col border-l border-border">
+              <PriceSummary totals={state.totals} />
+              <AIAssistant>
+                <ChatBubble quoteContext={{ selections: state.selections, totals: state.totals }} />
+              </AIAssistant>
+            </div>
+          </div>
+        </div>
   );
+
 };
 
 export default App;

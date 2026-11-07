@@ -71,6 +71,7 @@
     0% { transform: translateX(0); }
     100% { transform: translateX(-50%); }
 }
+.container {
     max-width: 1100px;
     margin: 0 auto;
     padding: 0 2rem;
@@ -431,7 +432,26 @@ footer {
 }
 .card-selection.selected {
     border: 2px solid var(--accent);
-    background-color: color-mix(in srgb, var(--accent), transparent 90%);
+    background-color: color-mix(in srgb, var(--accent), transparent 95%);
+}
+
+.card-row {
+    background-color: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 1rem;
+    padding: 1rem 1.5rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+.card-row:hover {
+    border-color: var(--accent);
+}
+.card-row.selected {
+    border: 2px solid var(--accent);
+    background-color: color-mix(in srgb, var(--accent), transparent 95%);
 }
 .btn-primary {
     background: var(--accent);

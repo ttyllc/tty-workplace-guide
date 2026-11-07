@@ -67,37 +67,37 @@ const ChatBubble: React.FC<ChatBubbleProps> = ({ quoteContext }) => {
             key={i} 
             className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}
           >
-            <div className={`max-w-[85%] p-3 rounded-2xl ${m.role === 'user' ? 'bg-indigo-600 text-white rounded-tr-none' : 'bg-white text-slate-800 border border-slate-200 rounded-tl-none shadow-sm'}`}>
-              {m.content}
-            </div>
+             <div className={`max-w-[85%] p-3 rounded-2xl ${m.role === 'user' ? 'bg-accent text-surface rounded-tr-none' : 'bg-surface text-fg border border-border rounded-tl-none shadow-sm'}`}>
+               {m.content}
+             </div>
           </motion.div>
         ))}
-        {isLoading && (
-          <div className="flex justify-start">
-            <div className="bg-white border border-slate-200 text-slate-400 text-xs italic p-3 rounded-2xl rounded-tl-none shadow-sm">
-              Architect is thinking...
-            </div>
-          </div>
-        )}
-      </div>
-
-      <div className="p-4 bg-white rounded-2xl border border-slate-200 shadow-sm flex gap-2">
-        <input
-          type="text"
-          className="flex-1 p-2 text-sm focus:outline-none"
-          placeholder="Ask a question..."
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          onKeyDown={(e) => e.key === 'Enter' && sendMessage()}
-        />
-        <button 
-          onClick={sendMessage}
-          disabled={isLoading}
-          className="bg-indigo-600 text-white px-3 py-2 rounded-lg hover:bg-indigo-700 transition disabled:opacity-50"
-        >
-          ↑
-        </button>
-      </div>
+         {isLoading && (
+           <div className="flex justify-start">
+             <div className="bg-surface border border-border text-muted text-xs italic p-3 rounded-2xl rounded-tl-none shadow-sm">
+               Architect is thinking...
+             </div>
+           </div>
+         )}
+       </div>
+ 
+       <div className="p-4 bg-surface rounded-2xl border border-border shadow-sm flex gap-2">
+         <input
+           type="text"
+           className="flex-1 p-2 text-sm focus:outline-none bg-transparent"
+           placeholder="Ask a question..."
+           value={input}
+           onChange={(e) => setInput(e.target.value)}
+           onKeyDown={(e) => e.key === 'Enter' && sendMessage()}
+         />
+         <button 
+           onClick={sendMessage}
+           disabled={isLoading}
+           className="bg-accent text-surface px-3 py-2 rounded-lg hover:bg-accent-hover transition disabled:opacity-50"
+         >
+           ↑
+         </button>
+       </div>
     </div>
   );
 };

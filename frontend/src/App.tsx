@@ -150,7 +150,7 @@ const PriceSummary: React.FC<{ totals: { mrr: number; setupFee: number } }> = ({
 };
 
 const AIAssistant: React.FC<{ children: React.ReactNode }> = ({ children }) => (
-  <div className="flex-grow p-8 flex flex-col bg-bg overflow-y-auto">
+  <div className="flex-grow p-8 flex flex-col ai-panel-bg overflow-y-auto">
     <div className="flex items-center gap-3 mb-6">
       <div className="w-8 h-8 bg-accent rounded-lg flex items-center justify-center text-white font-bold text-xs shadow-sm shadow-accent/20">
         AI
@@ -348,12 +348,12 @@ const App: React.FC = () => {
                   />
                 </div>
               ))}
-              <button
-                type="submit"
-                className="bg-accent text-surface px-6 py-3 rounded-xl font-semibold transition-all hover:bg-accent-hover active:scale-95 shadow-md hover:shadow-accent/20 w-full"
-              >
-                Review Final Quote
-              </button>
+               <button
+                 type="submit"
+                 className="btn-primary w-full"
+               >
+                 Review Final Quote
+               </button>
             </form>
           </div>
         )}
@@ -384,31 +384,31 @@ const App: React.FC = () => {
                 >
                   Edit Info
                 </button>
-                <button
-                  onClick={async () => {
-                    const payload = {
-                      ...state.userInfo,
-                      bundle: state.selections['start'] === 'yes' ? 'Flavor B' : 'Flavor A',
-                      addons: state.selections,
-                      mrr: state.totals.mrr,
-                      setup_fee: state.totals.setupFee,
-                      agreement: state.selections['final_terms'] === 'yes',
-                    };
-                    try {
-                      const res = await fetch('/api/leads', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(payload),
-                      });
-                      if (res.ok) alert('Quote submitted successfully!');
-                    } catch (e) {
-                      alert('Error submitting quote');
-                    }
-                  }}
-                  className="bg-accent text-surface px-6 py-3 rounded-xl font-semibold transition-all hover:bg-accent-hover active:scale-95 shadow-md hover:shadow-accent/20 bg-green-600 hover:bg-green-700"
-                >
-                  Submit Quote
-                </button>
+                 <button
+                   onClick={async () => {
+                     const payload = {
+                       ...state.userInfo,
+                       bundle: state.selections['start'] === 'yes' ? 'Flavor B' : 'Flavor A',
+                       addons: state.selections,
+                       mrr: state.totals.mrr,
+                       setup_fee: state.totals.setupFee,
+                       agreement: state.selections['final_terms'] === 'yes',
+                     };
+                     try {
+                       const res = await fetch('/api/leads', {
+                         method: 'POST',
+                         headers: { 'Content-Type': 'application/json' },
+                         body: JSON.stringify(payload),
+                       });
+                       if (res.ok) alert('Quote submitted successfully!');
+                     } catch (e) {
+                       alert('Error submitting quote');
+                     }
+                   }}
+                   className="btn-primary"
+                 >
+                   Submit Quote
+                 </button>
               </div>
             </div>
           </div>

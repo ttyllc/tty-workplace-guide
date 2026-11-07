@@ -386,6 +386,10 @@ footer {
     .nav-links { display: none; }
 }
 
+.ai-panel-bg {
+    background: oklch(97% 0.01 250);
+}
+
 .card-selection {
     background-color: var(--surface);
     border: 1px solid var(--border);
@@ -401,6 +405,24 @@ footer {
     border: 2px solid var(--accent);
     background-color: color-mix(in srgb, var(--accent), transparent 90%);
 }
+.btn-primary {
+    background: var(--accent);
+    color: var(--surface);
+    padding: 0.8rem 2rem;
+    border-radius: 8px;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 1.1rem;
+    display: inline-block;
+    transition: background 0.2s;
+    border: none;
+    cursor: pointer;
+    text-align: center;
+}
+.btn-primary:hover {
+    background: var(--accent-hover);
+}
+
 .btn-secondary {
     background-color: var(--surface);
     color: var(--muted);
